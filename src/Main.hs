@@ -1,24 +1,16 @@
 module Main (main) where
+
 import Clam.Prelude
+import Clam.Config
 
 import Calamity
 import Calamity.Cache.InMemory (runCacheInMemory)
 import Calamity.Commands
 import Calamity.Metrics.Noop (runMetricsNoop)
-import qualified Data.Text.Lazy as L
-import Dhall hiding (void)
+import Dhall (inputFile, auto)
 import qualified Di
-import DiPolysemy (info, runDiToIO)
+import DiPolysemy
 import Polysemy
-
-instance FromDhall Token where
-  autoWith = fmap BotToken . autoWith
-
-data Config = Config
-  { token ∷ Token
-  , prefix ∷ L.Text
-  } deriving Generic
-    deriving anyclass FromDhall
 
 main ∷ IO ()
 main = Di.new \di → do

@@ -19,6 +19,7 @@ extra-source-files:
 executable clam-bot-exe
   main-is: Main.hs
   other-modules:
+      Clam.Config
       Clam.Prelude
       Paths_clam_bot
   hs-source-dirs:
