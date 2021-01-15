@@ -12,12 +12,17 @@ description: clam
 
 dependencies:
 - base
-- lens
 - calamity
 - dhall
+- di
+- di-polysemy
+- lens
+- polysemy
+- polysemy-plugin
 - relude
 
 default-extensions:
+- BlockArguments
 - DataKinds
 - DeriveAnyClass
 - DeriveGeneric
@@ -37,9 +42,6 @@ default-extensions:
 - TypeOperators
 - UnicodeSyntax
 
-library:
-  source-dirs: src
-
 executables:
   clam-bot-exe:
     main:                Main.hs
@@ -55,8 +57,7 @@ executables:
     - -Wincomplete-uni-patterns
     - -Wpartial-fields
     - -Wredundant-constraints
-    dependencies:
-    - clam-bot
+    - -fplugin=Polysemy.Plugin
 
 tests:
   clam-bot-test:
