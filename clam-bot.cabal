@@ -18,30 +18,36 @@ extra-source-files:
 
 library
   exposed-modules:
+      Clam.Prelude
       Main
   other-modules:
       Paths_clam_bot
   hs-source-dirs:
       src
-  default-extensions: DataKinds FlexibleContexts GADTs LambdaCase NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables TypeApplications TypeOperators UnicodeSyntax
+  default-extensions: DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts GADTs LambdaCase NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables StandaloneDeriving TypeApplications TypeOperators UnicodeSyntax
   build-depends:
       base
     , calamity
+    , dhall
+    , lens
     , relude
   default-language: Haskell2010
 
 executable clam-bot-exe
   main-is: Main.hs
   other-modules:
+      Clam.Prelude
       Paths_clam_bot
   hs-source-dirs:
       src
-  default-extensions: DataKinds FlexibleContexts GADTs LambdaCase NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables TypeApplications TypeOperators UnicodeSyntax
+  default-extensions: DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts GADTs LambdaCase NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables StandaloneDeriving TypeApplications TypeOperators UnicodeSyntax
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
       base
     , calamity
     , clam-bot
+    , dhall
+    , lens
     , relude
   default-language: Haskell2010
 
@@ -52,11 +58,13 @@ test-suite clam-bot-test
       Paths_clam_bot
   hs-source-dirs:
       test
-  default-extensions: DataKinds FlexibleContexts GADTs LambdaCase NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables TypeApplications TypeOperators UnicodeSyntax
+  default-extensions: DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts GADTs LambdaCase NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables StandaloneDeriving TypeApplications TypeOperators UnicodeSyntax
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base
     , calamity
     , clam-bot
+    , dhall
+    , lens
     , relude
   default-language: Haskell2010

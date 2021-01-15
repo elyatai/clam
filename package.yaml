@@ -12,11 +12,17 @@ description: clam
 
 dependencies:
 - base
+- lens
 - calamity
+- dhall
 - relude
 
 default-extensions:
 - DataKinds
+- DeriveAnyClass
+- DeriveGeneric
+- DerivingStrategies
+- DuplicateRecordFields
 - FlexibleContexts
 - GADTs
 - LambdaCase
@@ -26,6 +32,7 @@ default-extensions:
 - OverloadedStrings
 - PolyKinds
 - ScopedTypeVariables
+- StandaloneDeriving
 - TypeApplications
 - TypeOperators
 - UnicodeSyntax
