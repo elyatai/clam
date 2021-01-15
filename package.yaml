@@ -20,6 +20,7 @@ dependencies:
 - polysemy
 - polysemy-plugin
 - relude
+- text
 
 default-extensions:
 - BlockArguments
