@@ -1,7 +1,8 @@
 module Main (main) where
 
 import Clam.Prelude
-import Clam.Config
+import Clam.Config (Config)
+import Clam.Rdb
 
 import Calamity hiding (Member)
 import Calamity.Cache.InMemory (runCacheInMemory)
@@ -9,7 +10,7 @@ import Calamity.Commands
 import Calamity.Metrics.Noop (runMetricsNoop)
 import Control.Monad.Logger (NoLoggingT(runNoLoggingT))
 import qualified Data.Text.Lazy as L
-import Database.Persist.Postgresql (withPostgresqlPool)
+import Database.Persist.Postgresql (withPostgresqlConn)
 import Dhall (inputFile, auto)
 import qualified Di
 import DiPolysemy (runDiToIO)
@@ -18,8 +19,8 @@ main ∷ IO ()
 main = Di.new \di → do
   conf ← inputFile @Config auto "./config.dhall"
 
-  runNoLoggingT $ withPostgresqlPool (conf ^. #db) 1 \pool → liftIO do
-    res ← runFinal . embedToFinal
+  runNoLoggingT $ withPostgresqlConn (conf ^. #db) \db → liftIO do
+    res ← runFinal . embedToFinal . runRdbConn db
       . runCacheInMemory . runMetricsNoop . runDiToIO di
       . useConstantPrefix (conf ^. #prefix)
       . runReader conf

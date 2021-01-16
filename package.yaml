@@ -27,10 +27,12 @@ dependencies:
 - polysemy
 - polysemy-plugin
 - relude
+- resource-pool
 - text
 
 default-extensions:
 - BlockArguments
+- ConstraintKinds
 - DataKinds
 - DeriveAnyClass
 - DeriveGeneric
