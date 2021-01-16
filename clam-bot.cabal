@@ -23,6 +23,7 @@ executable clam-bot-exe
       Clam.Orphans
       Clam.Persist
       Clam.Prelude
+      Clam.Rdb
       Paths_clam_bot
   hs-source-dirs:
       src
