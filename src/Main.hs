@@ -41,11 +41,11 @@ bot ∷ Main.BotC r ⇒ Sem r ()
 bot = void do
   conf ← ask @Config
 
-  _ ← react @'ReadyEvt \rd → do
+  react @'ReadyEvt \rd → do
     let u = rd ^. #user
     info $ "Ready as " <> u ^. #username <> "#" <> u ^. #discriminator
 
-  _ ← react @'MessageCreateEvt \msg →
+  react @'MessageCreateEvt \msg →
     whenJust ((conf ^. #prefix2) `L.stripPrefix` (msg ^. #content)) \s →
       whenJustM (rdbGetUq $ UniqueCommand $ L.toStrict s) \(Entity _ cmd) →
         void $ tell @Text msg $ cmd ^. commandReply
@@ -63,8 +63,22 @@ bot = void do
     command @'[Text] "del-command" \ctx cmd → do
       let uq = UniqueCommand cmd
       exists ← isJust <$> rdbGetUq uq
-      _ ← rdbDelUq uq
+      rdbDelUq uq
       void . tell @Text ctx $
         if exists
         then "Command deleted!"
         else "Command didn't exist, nothing done"
+
+    command @'[] "fail" \_ → fail "failed"
+
+    command @'[Maybe GuildChannel] "set-vent" \ctx mchan → do
+      fail "TODO"
+      chan ← whenNothing mchan do
+        undefined
+      undefined
+
+  react @('CustomEvt "command-error" (Context, CommandError)) \(ctx, err) →
+    void . tell ctx $ case err of
+      ParseError _ty why → codeblock' Nothing why
+      CheckError chk why → "Check " <> toLazy chk <> " failed: " <> why
+      InvokeError _cmd why → "Error: " <> why

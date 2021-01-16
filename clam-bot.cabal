@@ -48,6 +48,7 @@ executable clam-bot-exe
     , relude
     , resource-pool
     , text
+    , time
   default-language: Haskell2010
 
 test-suite clam-bot-test
@@ -79,4 +80,5 @@ test-suite clam-bot-test
     , relude
     , resource-pool
     , text
+    , time
   default-language: Haskell2010

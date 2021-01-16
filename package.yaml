@@ -29,6 +29,7 @@ dependencies:
 - relude
 - resource-pool
 - text
+- time
 
 default-extensions:
 - BlockArguments

@@ -4,6 +4,7 @@ module Clam.Persist where
 import Clam.Prelude
 
 import qualified Calamity.Types as C
+import Data.Time.Clock
 import Database.Persist.TH
 
 $(let settings = sqlSettings { mpsGenerateLenses = True }
@@ -27,6 +28,10 @@ Command
   name Text
   reply Text
   UniqueCommand name
+
+Vents
+  Id (C.Snowflake C.Channel)
+  lastMsg UTCTime Maybe
 |])
 
 deriving stock instance Generic User

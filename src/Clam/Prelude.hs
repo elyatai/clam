@@ -5,7 +5,7 @@ import Relude as M hiding
   , Reader, runReader, ask, asks, local
   , State, runState, get, put, gets, modify
   )
-import Control.Lens as M hiding ((??), rewrite, transform)
+import Control.Lens as M hiding ((??), rewrite, transform, Context)
 import DiPolysemy as M -- note: `error` conflicts with relude so omitted
   (debug, info, notice, warning, alert, critical, emergency)
 import Polysemy as M
