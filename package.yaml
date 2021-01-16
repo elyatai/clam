@@ -71,6 +71,7 @@ executables:
     - -Wincomplete-uni-patterns
     - -Wpartial-fields
     - -Wredundant-constraints
+    - -Wno-unused-do-bind
     - -fplugin=Polysemy.Plugin
 
 tests:

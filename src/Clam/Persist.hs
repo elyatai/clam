@@ -29,8 +29,8 @@ Command
   reply Text
   UniqueCommand name
 
-Vents
-  Id (C.Snowflake C.Channel)
+Vent
+  Id (C.Snowflake C.GuildChannel)
   lastMsg UTCTime Maybe
 |])
 

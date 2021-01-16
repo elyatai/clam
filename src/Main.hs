@@ -72,10 +72,10 @@ bot = void do
     command @'[] "fail" \_ → fail "failed"
 
     command @'[Maybe GuildChannel] "set-vent" \ctx mchan → do
-      fail "TODO"
-      chan ← whenNothing mchan do
-        undefined
-      undefined
+      chan ← whenNothing mchan $
+        whenNothing (ctx ^? #channel . #_GuildChannel') $
+          fail "You must be in a server to use this command!"
+      rdbPut' (VentKey $ getID chan) $ Vent Nothing
 
   react @('CustomEvt "command-error" (Context, CommandError)) \(ctx, err) →
     void . tell ctx $ case err of
