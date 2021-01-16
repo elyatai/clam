@@ -54,15 +54,16 @@ bot = void do
     command @'[] "ping" \ctx →
       void $ tell @Text ctx "pong"
 
-    command @'[Text, KleenePlusConcat Text] "add-command" \ctx name reply → do
-      res ← rdbPutUq $ Command name reply
-      void . tell @Text ctx $ case res of
+    command @'[Text, KleenePlusConcat Text] "add-command" \ctx cmd reply → do
+      res ← rdbPutUq $ Command cmd reply
+      void . tell ctx $ case res of
         Left _ → "That command already exists!"
-        Right _ → "Added command " <> name <> "!"
+        Right _ → "Added command " <> cmd <> "!"
 
-    command @'[Text] "del-command" \ctx name → do
-      exists ← isJust <$> rdbGetUq (UniqueCommand name)
-      _ ← rdbDelUq $ UniqueCommand name
+    command @'[Text] "del-command" \ctx cmd → do
+      let uq = UniqueCommand cmd
+      exists ← isJust <$> rdbGetUq uq
+      _ ← rdbDelUq uq
       void . tell @Text ctx $
         if exists
         then "Command deleted!"
