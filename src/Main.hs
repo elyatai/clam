@@ -5,13 +5,15 @@ import Clam.Config (Config)
 import Clam.Persist
 import Clam.Rdb
 
-import Calamity hiding (Member)
+import Calamity hiding (Member, embed)
 import Calamity.Cache.InMemory (runCacheInMemory)
 import Calamity.Commands
 import Calamity.Metrics.Noop (runMetricsNoop)
 import Control.Monad.Logger (NoLoggingT(runNoLoggingT))
 import qualified Data.Text.Lazy as L
-import Database.Persist.Postgresql (runSqlConn, runMigration, Entity(..), SqlBackend, withPostgresqlConn)
+import Data.Time (getCurrentTime)
+import Database.Persist.Postgresql
+  ((=.), runSqlConn, runMigration, Entity(..), SqlBackend, withPostgresqlConn)
 import Dhall (inputFile, auto)
 import qualified Di
 import DiPolysemy (runDiToIO)
@@ -48,10 +50,19 @@ bot = void do
     let u = rd ^. #user
     info $ "Ready as " <> u ^. #username <> "#" <> u ^. #discriminator
 
-  react @'MessageCreateEvt \msg →
+  react @'MessageCreateEvt \msg → do
+
+    -- reply to commands if invoked
     whenJust ((conf ^. #prefix2) `L.stripPrefix` (msg ^. #content)) \s →
       whenJustM (rdbGetUq $ UniqueCommand $ L.toStrict s) \(Entity _ cmd) →
         void $ tell @Text msg $ cmd ^. commandReply
+
+    -- update vent timers if necessary
+    whenJust (msg ^. #guildID) \_ → do
+      mchan ← upgrade $ msg ^. #channelID
+      whenJust (mchan >>= preview #_GuildChannel') \gchan → do
+        now ← embed getCurrentTime
+        rdbUpd (VentKey $ getID gchan) [VentLastMsg =. Just now]
 
   addCommands do
     command @'[] "ping" \ctx →
