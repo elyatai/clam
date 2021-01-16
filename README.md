@@ -16,5 +16,5 @@ to join, I'm happy to send you an invite
 
 ## etymology
 
-the bot runs on the [calamity][https://hackage.haskell.org/package/calamity]
+the bot runs on the [calamity](https://hackage.haskell.org/package/calamity)
 framework, which kinda sounds like "clam"
