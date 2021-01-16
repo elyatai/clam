@@ -17,6 +17,7 @@ dependencies:
 - dhall
 - di
 - di-polysemy
+- emojis
 - http-api-data
 - lens
 - monad-logger

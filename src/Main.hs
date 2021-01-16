@@ -15,6 +15,9 @@ import Database.Persist.Postgresql (runSqlConn, runMigration, Entity(..), SqlBac
 import Dhall (inputFile, auto)
 import qualified Di
 import DiPolysemy (runDiToIO)
+import Polysemy.Fail (Fail)
+import Relude.Unsafe (fromJust)
+import Text.Emoji (emojiFromAlias)
 
 main ∷ IO ()
 main = Di.new \di → do
@@ -72,13 +75,29 @@ bot = void do
     command @'[] "fail" \_ → fail "failed"
 
     command @'[Maybe GuildChannel] "set-vent" \ctx mchan → do
-      chan ← whenNothing mchan $
-        whenNothing (ctx ^? #channel . #_GuildChannel') $
-          fail "You must be in a server to use this command!"
+      chan ← channelOrHere ctx mchan
       rdbPut' (VentKey $ getID chan) $ Vent Nothing
+      let msg = ctx ^. #message
+      void . invoke $ CreateReaction msg msg $ namedEmoji "thumbsup"
+
+    command @'[Maybe GuildChannel] "unset-vent" \ctx mchan → do
+      chan ← channelOrHere ctx mchan
+      rdbDel $ VentKey $ getID chan
+      let msg = ctx ^. #message
+      void . invoke $ CreateReaction msg msg $ namedEmoji "thumbsup"
 
   react @('CustomEvt "command-error" (Context, CommandError)) \(ctx, err) →
     void . tell ctx $ case err of
       ParseError _ty why → codeblock' Nothing why
       CheckError chk why → "Check " <> toLazy chk <> " failed: " <> why
       InvokeError _cmd why → "Error: " <> why
+
+namedEmoji ∷ Text → RawEmoji
+namedEmoji = UnicodeEmoji . toLazy . fromJust . emojiFromAlias
+
+channelOrHere ∷ Member Fail r ⇒
+  Context → Maybe GuildChannel → Sem r GuildChannel
+channelOrHere ctx mchan =
+  whenNothing mchan $
+    whenNothing (ctx ^? #channel . #_GuildChannel') $
+      fail "You must be in a server to use this command!"
