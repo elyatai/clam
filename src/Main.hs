@@ -41,15 +41,29 @@ bot ∷ Main.BotC r ⇒ Sem r ()
 bot = void do
   conf ← ask @Config
 
-  react @'ReadyEvt \rd → do
+  _ ← react @'ReadyEvt \rd → do
     let u = rd ^. #user
     info $ "Ready as " <> u ^. #username <> "#" <> u ^. #discriminator
 
-  react @'MessageCreateEvt \msg →
+  _ ← react @'MessageCreateEvt \msg →
     whenJust ((conf ^. #prefix2) `L.stripPrefix` (msg ^. #content)) \s →
       whenJustM (rdbGetUq $ UniqueCommand $ L.toStrict s) \(Entity _ cmd) →
         void $ tell @Text msg $ cmd ^. commandReply
 
   addCommands do
     command @'[] "ping" \ctx →
-      void $ tell @Text (ctx ^. #message) "pong"
+      void $ tell @Text ctx "pong"
+
+    command @'[Text, KleenePlusConcat Text] "add-command" \ctx name reply → do
+      res ← rdbPutUq $ Command name reply
+      void . tell @Text ctx $ case res of
+        Left _ → "That command already exists!"
+        Right _ → "Added command " <> name <> "!"
+
+    command @'[Text] "del-command" \ctx name → do
+      exists ← isJust <$> rdbGetUq (UniqueCommand name)
+      _ ← rdbDelUq $ UniqueCommand name
+      void . tell @Text ctx $
+        if exists
+        then "Command deleted!"
+        else "Command didn't exist, nothing done"

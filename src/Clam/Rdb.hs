@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Clam.Rdb
   ( Rdb(..), RdbC
-  , rdbGet, rdbGetUq, rdbPut, rdbPut', rdbDel, rdbDelUq, rdbUpd
+  , rdbGet, rdbGetUq, rdbPut, rdbPut', rdbPutUq, rdbDel, rdbDelUq, rdbUpd
   , runRdbConn, runRdbPool
   ) where
 
@@ -14,12 +14,14 @@ import Database.Persist.Sql
 type PRB r b = PersistRecordBackend r b
 
 data Rdb b m a where
-  RdbGet   ∷ PRB r b ⇒ Key r               → Rdb b m (Maybe r)
-  RdbGetUq ∷ PRB r b ⇒ Unique r            → Rdb b m (Maybe (Entity r))
-  RdbPut   ∷ PRB r b ⇒ r                   → Rdb b m (Key r)
-  RdbPut'  ∷ PRB r b ⇒ Key r → r          → Rdb b m ()
-  RdbDel   ∷ PRB r b ⇒ Key r               → Rdb b m ()
-  RdbDelUq ∷ PRB r b ⇒ Unique r            → Rdb b m ()
+  RdbGet   ∷ PRB r b ⇒ Key r → Rdb b m (Maybe r)
+  RdbGetUq ∷ PRB r b ⇒ Unique r → Rdb b m (Maybe (Entity r))
+  RdbPut   ∷ PRB r b ⇒ r → Rdb b m (Key r)
+  RdbPut'  ∷ PRB r b ⇒ Key r → r → Rdb b m ()
+  RdbPutUq ∷ (PRB r b, AtLeastOneUniqueKey r) ⇒
+    r → Rdb b m (Either (Entity r) (Key r))
+  RdbDel   ∷ PRB r b ⇒ Key r → Rdb b m ()
+  RdbDelUq ∷ PRB r b ⇒ Unique r → Rdb b m ()
   RdbUpd   ∷ PRB r b ⇒ Key r → [Update r] → Rdb b m ()
 
 makeSem ''Rdb
@@ -50,6 +52,7 @@ runRdb1 = \case
   RdbGetUq u → getBy u
   RdbPut x → insert x
   RdbPut' k x → insertKey k x
+  RdbPutUq x → insertBy x
   RdbDel k → delete k
   RdbDelUq u → deleteBy u
   RdbUpd k us → update k us
