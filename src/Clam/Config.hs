@@ -6,15 +6,11 @@ import Calamity.Types
 import qualified Data.Text.Lazy as L
 import Dhall
 
-instance FromDhall Token where
-  autoWith = fmap BotToken . autoWith
-
-instance FromDhall (Snowflake a) where
-  autoWith _ = fmap (Snowflake . fromIntegral) natural
-
 data Config = Config
-  { token ∷ Token
-  , prefix ∷ L.Text
-  , guild ∷ Snowflake Guild
+  { token   ∷ Token
+  , prefix  ∷ L.Text -- bespoke commands
+  , prefix2 ∷ L.Text -- user-defined text echo commands
+  , guild   ∷ Snowflake Guild
+  , db      ∷ ByteString
   } deriving Generic
     deriving anyclass FromDhall

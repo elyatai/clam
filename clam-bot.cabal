@@ -20,19 +20,28 @@ executable clam-bot-exe
   main-is: Main.hs
   other-modules:
       Clam.Config
+      Clam.Orphans
+      Clam.Persist
       Clam.Prelude
       Paths_clam_bot
   hs-source-dirs:
       src
-  default-extensions: BlockArguments DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts GADTs LambdaCase NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables StandaloneDeriving TypeApplications TypeOperators UnicodeSyntax
+  default-extensions: BlockArguments DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts GADTs GeneralizedNewtypeDeriving LambdaCase MultiParamTypeClasses NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables StandaloneDeriving TypeApplications TypeFamilies TypeOperators UnicodeSyntax
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -fplugin=Polysemy.Plugin
   build-depends:
       base
+    , bytestring
     , calamity
     , dhall
     , di
     , di-polysemy
+    , http-api-data
     , lens
+    , monad-logger
+    , path-pieces
+    , persistent
+    , persistent-postgresql
+    , persistent-template
     , polysemy
     , polysemy-plugin
     , relude
@@ -46,16 +55,23 @@ test-suite clam-bot-test
       Paths_clam_bot
   hs-source-dirs:
       test
-  default-extensions: BlockArguments DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts GADTs LambdaCase NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables StandaloneDeriving TypeApplications TypeOperators UnicodeSyntax
+  default-extensions: BlockArguments DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts GADTs GeneralizedNewtypeDeriving LambdaCase MultiParamTypeClasses NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds ScopedTypeVariables StandaloneDeriving TypeApplications TypeFamilies TypeOperators UnicodeSyntax
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base
+    , bytestring
     , calamity
     , clam-bot
     , dhall
     , di
     , di-polysemy
+    , http-api-data
     , lens
+    , monad-logger
+    , path-pieces
+    , persistent
+    , persistent-postgresql
+    , persistent-template
     , polysemy
     , polysemy-plugin
     , relude

@@ -12,11 +12,18 @@ description: clam
 
 dependencies:
 - base
+- bytestring
 - calamity
 - dhall
 - di
 - di-polysemy
+- http-api-data
 - lens
+- monad-logger
+- path-pieces
+- persistent
+- persistent-postgresql
+- persistent-template
 - polysemy
 - polysemy-plugin
 - relude
@@ -31,7 +38,9 @@ default-extensions:
 - DuplicateRecordFields
 - FlexibleContexts
 - GADTs
+- GeneralizedNewtypeDeriving
 - LambdaCase
+- MultiParamTypeClasses
 - NoImplicitPrelude
 - OverloadedLabels
 - OverloadedLists
@@ -40,6 +49,7 @@ default-extensions:
 - ScopedTypeVariables
 - StandaloneDeriving
 - TypeApplications
+- TypeFamilies
 - TypeOperators
 - UnicodeSyntax
 
