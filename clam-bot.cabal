@@ -43,6 +43,7 @@ executable clam-bot-exe
     , di
     , di-polysemy
     , emojis
+    , esqueleto
     , http-api-data
     , lens
     , monad-logger
@@ -78,6 +79,7 @@ test-suite clam-bot-test
     , di
     , di-polysemy
     , emojis
+    , esqueleto
     , http-api-data
     , lens
     , monad-logger
