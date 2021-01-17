@@ -86,7 +86,7 @@ mkPermsCheck s p = buildCheck (s <> " permissions") \ctx →
     Just g →
       -- HACK: for some reason ctx ^. #member is Nothing
       invoke (GetGuildMember g $ ctx ^. #user) >>= \case
-        Left e → alert (show @Text e) $> Just "Something went wrong"
+        Left e → alert (showt e) $> Just "Something went wrong"
         Right m → pure $
           if permissionsIn g m .>=. p
           then Nothing

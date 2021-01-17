@@ -31,6 +31,7 @@ dependencies:
 - relude
 - resource-pool
 - text
+- text-show
 - time
 
 default-extensions:

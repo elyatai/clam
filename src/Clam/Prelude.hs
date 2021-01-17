@@ -12,5 +12,6 @@ import DiPolysemy as M -- note: `error` conflicts with relude so omitted
 import Polysemy as M
 import Polysemy.Reader as M
 import Polysemy.Fail as M
+import TextShow as M (showt, showtl)
 
 import Clam.Orphans ()
