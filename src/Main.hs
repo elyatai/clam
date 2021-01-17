@@ -65,8 +65,7 @@ bot = void do
         rdbUpd (VentKey $ getID gchan) [VentLastMsg =. Just now]
 
   addCommands do
-    command @'[] "ping" \ctx →
-      void $ tell @Text ctx "pong"
+    command @'[] "ping" \ctx → void $ tell @Text ctx "pong"
 
     command @'[Text, KleenePlusConcat Text] "add-command" \ctx cmd reply → do
       res ← rdbPutUq $ Command cmd reply
@@ -83,25 +82,25 @@ bot = void do
         then "Command deleted!"
         else "Command didn't exist, nothing done"
 
-    command @'[] "fail" \_ → fail "failed"
-
     command @'[Maybe GuildChannel] "set-vent" \ctx mchan → do
       chan ← channelOrHere ctx mchan
       rdbPut' (VentKey $ getID chan) $ Vent Nothing
-      let msg = ctx ^. #message
-      void . invoke $ CreateReaction msg msg $ namedEmoji "thumbsup"
+      void . reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
 
     command @'[Maybe GuildChannel] "unset-vent" \ctx mchan → do
       chan ← channelOrHere ctx mchan
       rdbDel $ VentKey $ getID chan
-      let msg = ctx ^. #message
-      void . invoke $ CreateReaction msg msg $ namedEmoji "thumbsup"
+      void . reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
 
   react @('CustomEvt "command-error" (Context, CommandError)) \(ctx, err) →
     void . tell ctx $ case err of
       ParseError _ty why → codeblock' Nothing why
       CheckError chk why → "Check " <> toLazy chk <> " failed: " <> why
       InvokeError _cmd why → "Error: " <> why
+
+reactTo ∷ (Main.BotC r, HasID Channel a, HasID Message a) ⇒
+  a → RawEmoji → Sem r (Either RestError ())
+reactTo t e = invoke $ CreateReaction t t e
 
 namedEmoji ∷ Text → RawEmoji
 namedEmoji = UnicodeEmoji . toLazy . fromJust . emojiFromAlias
