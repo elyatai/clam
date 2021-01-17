@@ -52,8 +52,7 @@ runSqlPool pool = transform go . reinterpret (embed . runSql1) where
   go ∷ ∀ m x. Embed (ReaderT backend IO) m x → Embed IO m x
   go = Embed . flip Sql.runSqlPool pool . unEmbed
 
-runSql1 ∷ SqlC backend ⇒
-  Sql backend m x → ReaderT backend IO x
+runSql1 ∷ SqlC backend ⇒ Sql backend m x → ReaderT backend IO x
 runSql1 = \case
   SqlGet k → get k
   SqlGetUq u → getBy u
