@@ -3,7 +3,7 @@ module Clam.Sql
   ( Sql(..), SqlC
   , sqlGet, sqlGetUq, sqlSel, sqlCount, sqlHas
   , sqlPut, sqlPut', sqlPutUq, sqlDel, sqlDelUq, sqlUpd
-  , sqlGetQ
+  , sqlGetQ, sqlDelQ, sqlUpdQ
   , runSqlConn, runSqlPool
   , P.SqlBackend
   ) where
@@ -16,6 +16,11 @@ import qualified Database.Persist.Sql as P
 import Database.Esqueleto.Internal.Internal as E
 
 type PRB r b = PersistRecordBackend r b
+
+type UpdateC val =
+  ( PersistEntity val
+  , BackendCompatible P.SqlBackend (PersistEntityBackend val)
+  )
 
 data Sql b m a where
   SqlGet   ∷ PRB r b ⇒ Key r → Sql b m (Maybe r)
@@ -32,6 +37,8 @@ data Sql b m a where
   SqlUpd   ∷ PRB r b ⇒ Key r → [P.Update r] → Sql b m ()
 
   SqlGetQ  ∷ SqlSelect a r ⇒ SqlQuery a → Sql b m [r]
+  SqlDelQ  ∷ SqlQuery () → Sql b m Word
+  SqlUpdQ  ∷ UpdateC r ⇒ (SqlExpr (Entity r) → SqlQuery ()) → Sql b m Word
 
 makeSem ''Sql
 
@@ -69,3 +76,5 @@ runSql1 = \case
   SqlUpd k us → P.update k us
 
   SqlGetQ q → E.select q
+  SqlDelQ q → fromIntegral <$> E.deleteCount q
+  SqlUpdQ f → fromIntegral <$> E.updateCount f
