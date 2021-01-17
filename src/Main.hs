@@ -98,7 +98,7 @@ bot = void do
       CheckError chk why → "Check " <> toLazy chk <> " failed: " <> why
       InvokeError _cmd why → "Error: " <> why
 
-reactTo ∷ (Main.BotC r, HasID Channel a, HasID Message a) ⇒
+reactTo ∷ (Calamity.BotC r, HasID Channel a, HasID Message a) ⇒
   a → RawEmoji → Sem r (Either RestError ())
 reactTo t e = invoke $ CreateReaction t t e
 
