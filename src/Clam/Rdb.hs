@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Clam.Rdb
   ( Rdb(..), RdbC
-  , rdbGet, rdbGetUq, rdbGetBy, rdbCount, rdbHas
+  , rdbGet, rdbGetUq, rdbSel, rdbCount, rdbHas
   , rdbPut, rdbPut', rdbPutUq
   , rdbDel, rdbDelUq
   , rdbUpd
@@ -20,7 +20,7 @@ type PRB r b = PersistRecordBackend r b
 data Rdb b m a where
   RdbGet   ∷ PRB r b ⇒ Key r → Rdb b m (Maybe r)
   RdbGetUq ∷ PRB r b ⇒ Unique r → Rdb b m (Maybe (Entity r))
-  RdbGetBy ∷ PRB r b ⇒ [Filter r] → Rdb b m [Entity r]
+  RdbSel   ∷ PRB r b ⇒ [Filter r] → Rdb b m [Entity r]
   RdbCount ∷ PRB r b ⇒ [Filter r] → Rdb b m Word
   RdbHas   ∷ PRB r b ⇒ [Filter r] → Rdb b m Bool
   RdbPut   ∷ PRB r b ⇒ r → Rdb b m (Key r)
@@ -57,7 +57,7 @@ runRdb1 ∷ RdbC backend ⇒
 runRdb1 = \case
   RdbGet k → get k
   RdbGetUq u → getBy u
-  RdbGetBy fs → selectList fs []
+  RdbSel fs → selectList fs []
   RdbCount fs → fromIntegral <$> count fs
   RdbHas fs → (/= 0) <$> count fs
   RdbPut x → insert x
