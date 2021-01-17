@@ -19,11 +19,15 @@ extra-source-files:
 executable clam-bot-exe
   main-is: Main.hs
   other-modules:
+      Clam.Commands.Commands
+      Clam.Commands.Vent
       Clam.Config
       Clam.Orphans
       Clam.Persist
       Clam.Prelude
       Clam.Rdb
+      Clam.Types
+      Clam.Utils.Calamity
       Paths_clam_bot
   hs-source-dirs:
       src

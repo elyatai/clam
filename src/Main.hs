@@ -1,9 +1,13 @@
 module Main (main) where
 
 import Clam.Prelude
-import Clam.Config (Config)
 import Clam.Persist
+import Clam.Types as Clam
 import Clam.Rdb
+
+import Clam.Commands.Commands as Commands
+import Clam.Commands.Roles as Roles
+import Clam.Commands.Vent as Vent
 
 import Calamity hiding (Member, embed)
 import Calamity.Cache.InMemory (runCacheInMemory)
@@ -15,13 +19,10 @@ import qualified Data.Text.Lazy as L
 import Data.Flags ((.>=.))
 import Data.Time (getCurrentTime)
 import Database.Persist.Postgresql
-  ((==.), (=.), runSqlConn, runMigration, Entity(..), SqlBackend, withPostgresqlConn)
+  ((=.), runSqlConn, runMigration, Entity(..), withPostgresqlConn)
 import Dhall (inputFile, auto)
 import qualified Di
 import DiPolysemy (runDiToIO)
-import Polysemy.Fail (Fail)
-import Relude.Unsafe (fromJust)
-import Text.Emoji (emojiFromAlias)
 
 main ∷ IO ()
 main = Di.new \di → do
@@ -39,12 +40,7 @@ main = Di.new \di → do
     whenJust res \(StartupError s) →
       Di.runDiT di $ Di.alert $ "Startup error: " <> s
 
-type BotC r =
-  ( Calamity.BotC r
-  , Members '[ParsePrefix, Reader Config, Rdb SqlBackend] r
-  )
-
-bot ∷ Main.BotC r ⇒ Sem r ()
+bot ∷ Clam.BotC r ⇒ Sem r ()
 bot = void do
   conf ← ask @Config
 
@@ -69,48 +65,13 @@ bot = void do
   addCommands do
     command @'[] "ping" \ctx → void $ tell @Text ctx "pong"
 
-    command @'[Text, KleenePlusConcat Text] "add-command" \ctx cmd reply → do
-      res ← rdbPutUq $ Command cmd reply
-      void . tell ctx $ case res of
-        Left _ → "That command already exists!"
-        Right _ → "Added command " <> cmd <> "!"
+    Commands.commands
 
-    command @'[Text] "del-command" \ctx cmd → do
-      let uq = UqCommandName cmd
-      exists ← isJust <$> rdbGetUq uq
-      rdbDelUq uq
-      void . tell @Text ctx $
-        if exists
-        then "Command deleted!"
-        else "Command didn't exist, nothing done"
+    do chk ← mkPermsCheck "Manage Channels" manageChannels
+       requires [chk] Vent.commands
 
-    channelsPerm ← mkPermsCheck "Manage Channels" manageChannels
-    requires [channelsPerm] do
-      command @'[Maybe GuildChannel] "set-vent" \ctx mchan → do
-        chan ← channelOrHere ctx mchan
-        rdbPut' (VentKey $ getID chan) $ Vent Nothing
-        void . reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
-
-      command @'[Maybe GuildChannel] "unset-vent" \ctx mchan → do
-        chan ← channelOrHere ctx mchan
-        rdbDel $ VentKey $ getID chan
-        void . reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
-
-    rolesPerm ← mkPermsCheck "Manage Roles" manageRoles
-    requires [rolesPerm] do
-      command @'[Text] "add-group" \ctx grp → do
-        whenM (isLeft <$> rdbPutUq (Group grp)) $
-          fail "That group already exists!"
-        void $ tell @Text ctx "Group created"
-
-      command @'[Text] "del-group" \ctx grp → do
-        let uq = UqGroupName grp
-        k ← rdbGetUq uq
-          >>= maybe (fail "Group doesn't exist") (pure . entityKey)
-        whenM (rdbHas [RoleGroup ==. k]) $
-          fail "Can't delete group, roles under it exist"
-        rdbDelUq uq
-        void $ tell @Text ctx "Group deleted"
+    do chk ← mkPermsCheck "Manage Roles" manageRoles
+       requires [chk] Roles.commands
 
   react @('CustomEvt "command-error" (Context, CommandError)) \(ctx, err) →
     void . tell ctx $ case err of
@@ -130,17 +91,3 @@ mkPermsCheck s p = buildCheck (s <> " permissions") \ctx →
           if permissionsIn g m .>=. p
           then Nothing
           else Just "You don't have permission!"
-
-reactTo ∷ (Calamity.BotC r, HasID Channel a, HasID Message a) ⇒
-  a → RawEmoji → Sem r (Either RestError ())
-reactTo t e = invoke $ CreateReaction t t e
-
-namedEmoji ∷ Text → RawEmoji
-namedEmoji = UnicodeEmoji . toLazy . fromJust . emojiFromAlias
-
-channelOrHere ∷ Member Fail r ⇒
-  Context → Maybe GuildChannel → Sem r GuildChannel
-channelOrHere ctx mchan =
-  whenNothing mchan $
-    whenNothing (ctx ^? #channel . #_GuildChannel') $
-      fail "You must be in a server to use this command!"

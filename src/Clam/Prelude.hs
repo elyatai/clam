@@ -11,5 +11,6 @@ import DiPolysemy as M -- note: `error` conflicts with relude so omitted
   (debug, info, notice, warning, alert, critical, emergency)
 import Polysemy as M
 import Polysemy.Reader as M
+import Polysemy.Fail as M
 
 import Clam.Orphans ()
