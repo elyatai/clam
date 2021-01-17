@@ -3,7 +3,7 @@ module Main (main) where
 import Clam.Prelude
 import Clam.Persist
 import Clam.Types as Clam
-import Clam.Rdb
+import Clam.Sql as Clam
 
 import Clam.Commands.Commands as Commands
 import Clam.Commands.Roles as Roles
@@ -18,7 +18,7 @@ import Control.Monad.Logger (NoLoggingT(runNoLoggingT))
 import qualified Data.Text.Lazy as L
 import Data.Flags ((.>=.))
 import Data.Time (getCurrentTime)
-import Database.Persist.Postgresql
+import Database.Persist.Postgresql as Pg
   ((=.), runSqlConn, runMigration, Entity(..), withPostgresqlConn)
 import Dhall (inputFile, auto)
 import qualified Di
@@ -29,9 +29,9 @@ main = Di.new \di → do
   conf ← inputFile @Config auto "./config.dhall"
 
   runNoLoggingT $ withPostgresqlConn (conf ^. #db) \db → liftIO do
-    runSqlConn (runMigration migrateAll) db
+    Pg.runSqlConn (runMigration migrateAll) db
 
-    res ← runFinal . embedToFinal . runRdbConn db
+    res ← runFinal . embedToFinal . Clam.runSqlConn db
       . runCacheInMemory . runMetricsNoop . runDiToIO di
       . useConstantPrefix (conf ^. #prefix)
       . runReader conf
@@ -52,7 +52,7 @@ bot = void do
 
     -- reply to commands if invoked
     whenJust ((conf ^. #prefix2) `L.stripPrefix` (msg ^. #content)) \s →
-      whenJustM (rdbGetUq $ UqCommandName $ L.toStrict s) \(Entity _ cmd) →
+      whenJustM (sqlGetUq $ UqCommandName $ L.toStrict s) \(Entity _ cmd) →
         void $ tell @Text msg $ cmd ^. commandReply
 
     -- update vent timers if necessary
@@ -60,7 +60,7 @@ bot = void do
       mchan ← upgrade $ msg ^. #channelID
       whenJust (mchan >>= preview #_GuildChannel') \gchan → do
         now ← embed getCurrentTime
-        rdbUpd (VentKey $ getID gchan) [VentLastMsg =. Just now]
+        sqlUpd (VentKey $ getID gchan) [VentLastMsg =. Just now]
 
   addCommands do
     command @'[] "ping" \ctx → void $ tell @Text ctx "pong"

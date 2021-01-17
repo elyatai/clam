@@ -26,7 +26,7 @@ executable clam-bot-exe
       Clam.Orphans
       Clam.Persist
       Clam.Prelude
-      Clam.Rdb
+      Clam.Sql
       Clam.Types
       Clam.Utils.Calamity
       Paths_clam_bot
