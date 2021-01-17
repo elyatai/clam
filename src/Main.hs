@@ -15,7 +15,7 @@ import qualified Data.Text.Lazy as L
 import Data.Flags ((.>=.))
 import Data.Time (getCurrentTime)
 import Database.Persist.Postgresql
-  ((=.), runSqlConn, runMigration, Entity(..), SqlBackend, withPostgresqlConn)
+  ((==.), (=.), runSqlConn, runMigration, Entity(..), SqlBackend, withPostgresqlConn)
 import Dhall (inputFile, auto)
 import qualified Di
 import DiPolysemy (runDiToIO)
@@ -56,7 +56,7 @@ bot = void do
 
     -- reply to commands if invoked
     whenJust ((conf ^. #prefix2) `L.stripPrefix` (msg ^. #content)) \s →
-      whenJustM (rdbGetUq $ UniqueCommand $ L.toStrict s) \(Entity _ cmd) →
+      whenJustM (rdbGetUq $ UqCommandName $ L.toStrict s) \(Entity _ cmd) →
         void $ tell @Text msg $ cmd ^. commandReply
 
     -- update vent timers if necessary
@@ -76,7 +76,7 @@ bot = void do
         Right _ → "Added command " <> cmd <> "!"
 
     command @'[Text] "del-command" \ctx cmd → do
-      let uq = UniqueCommand cmd
+      let uq = UqCommandName cmd
       exists ← isJust <$> rdbGetUq uq
       rdbDelUq uq
       void . tell @Text ctx $
@@ -84,8 +84,8 @@ bot = void do
         then "Command deleted!"
         else "Command didn't exist, nothing done"
 
-    chk ← mkPermsCheck "Manage Channels" manageChannels
-    requires [chk] do
+    channelsPerm ← mkPermsCheck "Manage Channels" manageChannels
+    requires [channelsPerm] do
       command @'[Maybe GuildChannel] "set-vent" \ctx mchan → do
         chan ← channelOrHere ctx mchan
         rdbPut' (VentKey $ getID chan) $ Vent Nothing
@@ -95,6 +95,22 @@ bot = void do
         chan ← channelOrHere ctx mchan
         rdbDel $ VentKey $ getID chan
         void . reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
+
+    rolesPerm ← mkPermsCheck "Manage Roles" manageRoles
+    requires [rolesPerm] do
+      command @'[Text] "add-group" \ctx grp → do
+        whenM (isLeft <$> rdbPutUq (Group grp)) $
+          fail "That group already exists!"
+        void $ tell @Text ctx "Group created"
+
+      command @'[Text] "del-group" \ctx grp → do
+        let uq = UqGroupName grp
+        k ← rdbGetUq uq
+          >>= maybe (fail "Group doesn't exist") (pure . entityKey)
+        whenM (rdbHas [RoleGroup ==. k]) $
+          fail "Can't delete group, roles under it exist"
+        rdbDelUq uq
+        void $ tell @Text ctx "Group deleted"
 
   react @('CustomEvt "command-error" (Context, CommandError)) \(ctx, err) →
     void . tell ctx $ case err of

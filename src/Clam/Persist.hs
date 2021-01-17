@@ -16,18 +16,19 @@ User
 
 Group
   name Text
+  UqGroupName name
 
 Role
   Id (C.Snowflake C.Role)
   name Text
   emoji Text
   group GroupId
-  UniqueRole group emoji
+  UqRole group emoji
 
 Command
   name Text
   reply Text
-  UniqueCommand name
+  UqCommandName name
 
 Vent
   Id (C.Snowflake C.GuildChannel)

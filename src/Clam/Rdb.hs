@@ -1,7 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Clam.Rdb
   ( Rdb(..), RdbC
-  , rdbGet, rdbGetUq, rdbPut, rdbPut', rdbPutUq, rdbDel, rdbDelUq, rdbUpd
+  , rdbGet, rdbGetUq, rdbGetBy, rdbCount, rdbHas
+  , rdbPut, rdbPut', rdbPutUq
+  , rdbDel, rdbDelUq
+  , rdbUpd
   , runRdbConn, runRdbPool
   ) where
 
@@ -16,6 +19,9 @@ type PRB r b = PersistRecordBackend r b
 data Rdb b m a where
   RdbGet   ∷ PRB r b ⇒ Key r → Rdb b m (Maybe r)
   RdbGetUq ∷ PRB r b ⇒ Unique r → Rdb b m (Maybe (Entity r))
+  RdbGetBy ∷ PRB r b ⇒ [Filter r] → Rdb b m [Entity r]
+  RdbCount ∷ PRB r b ⇒ [Filter r] → Rdb b m Word
+  RdbHas   ∷ PRB r b ⇒ [Filter r] → Rdb b m Bool
   RdbPut   ∷ PRB r b ⇒ r → Rdb b m (Key r)
   RdbPut'  ∷ PRB r b ⇒ Key r → r → Rdb b m ()
   RdbPutUq ∷ (PRB r b, AtLeastOneUniqueKey r) ⇒
@@ -27,7 +33,7 @@ data Rdb b m a where
 makeSem ''Rdb
 
 type RdbC backend =
-  ( PersistStoreWrite backend, PersistUniqueWrite backend
+  ( PersistStore backend, PersistUnique backend, PersistQuery backend
   , BackendCompatible SqlBackend backend
   )
 
@@ -50,10 +56,12 @@ runRdb1 ∷ RdbC backend ⇒
 runRdb1 = \case
   RdbGet k → get k
   RdbGetUq u → getBy u
+  RdbGetBy fs → selectList fs []
+  RdbCount fs → fromIntegral <$> count fs
+  RdbHas fs → (/= 0) <$> count fs
   RdbPut x → insert x
   RdbPut' k x → insertKey k x
   RdbPutUq x → insertBy x
   RdbDel k → delete k
   RdbDelUq u → deleteBy u
   RdbUpd k us → update k us
-
