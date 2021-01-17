@@ -6,6 +6,7 @@ module Clam.Rdb
   , rdbDel, rdbDelUq
   , rdbUpd
   , runRdbConn, runRdbPool
+  , SqlBackend
   ) where
 
 import Clam.Prelude

@@ -20,7 +20,6 @@ Group
 
 Role
   Id (C.Snowflake C.Role)
-  name Text
   emoji Text
   group GroupId
   UqRole group emoji
@@ -39,3 +38,4 @@ deriving stock instance Generic User
 deriving stock instance Generic Group
 deriving stock instance Generic Role
 deriving stock instance Generic Command
+deriving stock instance Generic Vent
