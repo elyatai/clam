@@ -33,6 +33,7 @@ executable clam-bot-exe
       base
     , bytestring
     , calamity
+    , data-flags
     , dhall
     , di
     , di-polysemy
@@ -66,6 +67,7 @@ test-suite clam-bot-test
     , bytestring
     , calamity
     , clam-bot
+    , data-flags
     , dhall
     , di
     , di-polysemy

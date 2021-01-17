@@ -8,9 +8,11 @@ import Clam.Rdb
 import Calamity hiding (Member, embed)
 import Calamity.Cache.InMemory (runCacheInMemory)
 import Calamity.Commands
+import Calamity.Commands.Check
 import Calamity.Metrics.Noop (runMetricsNoop)
 import Control.Monad.Logger (NoLoggingT(runNoLoggingT))
 import qualified Data.Text.Lazy as L
+import Data.Flags ((.>=.))
 import Data.Time (getCurrentTime)
 import Database.Persist.Postgresql
   ((=.), runSqlConn, runMigration, Entity(..), SqlBackend, withPostgresqlConn)
@@ -82,21 +84,36 @@ bot = void do
         then "Command deleted!"
         else "Command didn't exist, nothing done"
 
-    command @'[Maybe GuildChannel] "set-vent" \ctx mchan → do
-      chan ← channelOrHere ctx mchan
-      rdbPut' (VentKey $ getID chan) $ Vent Nothing
-      void . reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
+    chk ← mkPermsCheck "Manage Channels" manageChannels
+    requires [chk] do
+      command @'[Maybe GuildChannel] "set-vent" \ctx mchan → do
+        chan ← channelOrHere ctx mchan
+        rdbPut' (VentKey $ getID chan) $ Vent Nothing
+        void . reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
 
-    command @'[Maybe GuildChannel] "unset-vent" \ctx mchan → do
-      chan ← channelOrHere ctx mchan
-      rdbDel $ VentKey $ getID chan
-      void . reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
+      command @'[Maybe GuildChannel] "unset-vent" \ctx mchan → do
+        chan ← channelOrHere ctx mchan
+        rdbDel $ VentKey $ getID chan
+        void . reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
 
   react @('CustomEvt "command-error" (Context, CommandError)) \(ctx, err) →
     void . tell ctx $ case err of
       ParseError _ty why → codeblock' Nothing why
       CheckError chk why → "Check " <> toLazy chk <> " failed: " <> why
       InvokeError _cmd why → "Error: " <> why
+
+mkPermsCheck ∷ Calamity.BotC r ⇒ Text → Permissions → Sem r Check
+mkPermsCheck s p = buildCheck (s <> " permissions") \ctx →
+  case ctx ^. #guild of
+    Nothing → pure $ Just "Not in a server"
+    Just g →
+      -- HACK for some reason ctx ^. #member is Nothing
+      invoke (GetGuildMember g $ ctx ^. #user) >>= \case
+        Left e → alert (show @Text e) $> Just "Something went wrong"
+        Right m → pure $
+          if permissionsIn g m .>=. p
+          then Nothing
+          else Just "You don't have permission!"
 
 reactTo ∷ (Calamity.BotC r, HasID Channel a, HasID Message a) ⇒
   a → RawEmoji → Sem r (Either RestError ())
