@@ -43,6 +43,7 @@ default-extensions:
 - DerivingStrategies
 - DuplicateRecordFields
 - FlexibleContexts
+- FlexibleInstances
 - GADTs
 - GeneralizedNewtypeDeriving
 - LambdaCase

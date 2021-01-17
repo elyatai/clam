@@ -4,7 +4,7 @@ import Clam.Prelude
 import Clam.Rdb
 import Clam.Types as Clam
 
-import Calamity as D hiding (emoji)
+import Calamity as D hiding (emoji, parse)
 import Calamity.Commands hiding (commands)
 import qualified Data.Text.Lazy as L
 import Database.Persist
@@ -23,7 +23,7 @@ commands = void do
     rdbDelUq $ UqGroupName grp
     void $ tell @Text ctx "Group deleted"
 
-  command @'[Text, Snowflake D.Role, RawEmoji] "add-role" \ctx grp role emoji → do
+  command @'[Text, Snowflake D.Role, RawEmoji] "track-role" \ctx grp role emoji → do
     let emoji' = showt emoji
     gk ← groupFromName grp
 
@@ -43,7 +43,23 @@ commands = void do
         <> " already exists" <> rest
 
     rdbPut' (RoleKey role) $ Clam.Role emoji' gk
-    void $ tell @Text ctx "Role added"
+    void $ tell @Text ctx "Role tracked"
+
+  command @'[RoleRef] "untrack-role" \ctx rref → do
+    mrole ← case rref of
+      ById rid → ($> RoleKey rid) <$> rdbGet (RoleKey rid)
+      ByGroupEmoji g e → do
+        gk ← groupFromName g
+        fmap entityKey <$> rdbGetUq (UqRole gk $ showt e)
+    rk ← whenNothing mrole $ fail "Role not found, nothing done"
+    rdbDel rk
+    void $ tell @Text ctx "Role untracked"
+
+data RoleRef = ById (Snowflake D.Role) | ByGroupEmoji Text RawEmoji
+
+instance Parser RoleRef r where
+  parse = parse @(Either (Snowflake D.Role) (Text, RawEmoji))
+    <&> either ById (uncurry ByGroupEmoji)
 
 groupFromName ∷ Members [Fail, Rdb SqlBackend] r ⇒ Text → Sem r (Key Group)
 groupFromName grp = rdbGetUq (UqGroupName grp)
