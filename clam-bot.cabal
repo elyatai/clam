@@ -20,6 +20,7 @@ executable clam-bot-exe
   main-is: Main.hs
   other-modules:
       Clam.Commands.Commands
+      Clam.Commands.Roles
       Clam.Commands.Vent
       Clam.Config
       Clam.Orphans
