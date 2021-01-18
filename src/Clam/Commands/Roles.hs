@@ -59,8 +59,9 @@ trackRoleCmd = command_ @'[Text, Snowflake D.Role, RawEmoji] "track-role"
     gk ← groupFromName grp
 
     whenJustM (sqlGetUq $ UqRole gk emoji') \(Entity (RoleKey rid) _) → do
-      g ← whenNothing (ctx ^. #guild) $ fail "You're not in a server!"
-      rest ← upgrade (g ^. #id, rid)
+      gid ← ctx ^? #guild . _Just . #id
+        & maybe (asks @Config $ view #guild) pure
+      rest ← upgrade (gid, rid)
         <&> maybe ", but could not be loaded" \r → ": " <> r ^. #name
       fail . L.unpack $
         "A role in group " <> codeline (toLazy grp)
