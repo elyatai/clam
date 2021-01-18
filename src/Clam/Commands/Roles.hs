@@ -42,10 +42,10 @@ listGroupsCmd ∷ Cmd r
 listGroupsCmd = command_ @'[] "list-groups" \ctx → do
   gs ← sqlGetQ $ E.from $ Table @Group
   rs ← sqlGetQ $ E.from $ Table @Clam.Role
-  map (\(Entity k g) → (k, (g ^. groupName, []))) gs
+  fmap (\(Entity k g) → (k, (g ^. groupName, []))) gs
     & M.fromList
     & flip (foldl' $ flip consRole) rs
-    & T.unlines . map (uncurry fmt) . M.elems
+    & T.unlines . fmap (uncurry fmt) . M.elems
     & void . tell ctx
   where
     consRole (Entity _ r) = ix (r ^. roleGroup) . _2 %~ (r :)
