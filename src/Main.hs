@@ -19,7 +19,7 @@ import qualified Data.Text.Lazy as L
 import Data.Flags ((.>=.))
 import Data.Time (getCurrentTime)
 import Database.Persist.Postgresql as Pg
-  ((=.), runSqlConn, runMigration, Entity(..), withPostgresqlConn)
+  (Entity(..), (=.), runMigration, runSqlConn, withPostgresqlConn)
 import Dhall (inputFile, auto)
 import qualified Di
 import DiPolysemy (runDiToIO)
@@ -88,7 +88,7 @@ mkPermsCheck s p = buildCheck (s <> " permissions") \ctx →
       -- HACK: for some reason ctx ^. #member is Nothing
       invoke (GetGuildMember g $ ctx ^. #user) >>= \case
         Left e → error (show @Text e) $> Just "Something went wrong"
-        Right m → pure $
+        Right m → pure $
           if permissionsIn g m .>=. p
           then Nothing
           else Just "You don't have permission!"
