@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: calamity-0.1.23.1@sha256:39c290378e7eac99dd23b0d84e8c356610bd41bc9a70cf82ae5eab663a121e03,6708
+    hackage: calamity-0.1.24.0@sha256:201f40d62d8ee4803d24d94ed68504d356736ddeb82ab4cbce57d230d8f3950c,6739
     pantry-tree:
-      size: 8147
-      sha256: ea3e7f38b9d3c4b6cfbe8bf029f53a5bccbe52585f50d1b91afa6f5610166244
+      size: 8101
+      sha256: fc8a6688c89d200168e589116bbd68a06a28de4768fc44cbfb4b2b66a79f5b6f
   original:
-    hackage: calamity-0.1.23.1
+    hackage: calamity-0.1.24.0
 - completed:
     hackage: data-flags-0.0.3.4@sha256:a133f2912e0e22f03419dc89a04b1e117ff6290f1777f5b7f037f683b80ed2cf,1097
     pantry-tree:
@@ -89,6 +89,13 @@ packages:
   original:
     hackage: primitive-unlifted-0.1.3.0@sha256:a98f827740f5dcf097d885b3a47c32f4462204449620abc9d51b8c4f8619f9e6,1427
 - completed:
+    hackage: req-3.8.0@sha256:60b3249f112874e2a30389149010dac65427991e998095516e201ff456116dbe,3857
+    pantry-tree:
+      size: 712
+      sha256: 0e415a4787687d900f2f3cadee4caf2e9ee7105f32740797b1f1395364469668
+  original:
+    hackage: req-3.8.0@sha256:60b3249f112874e2a30389149010dac65427991e998095516e201ff456116dbe,3857
+- completed:
     hackage: stm-containers-1.2@sha256:a887f2e7692b7cf20e0b081e2d66e21076e2bd4b57016ec59c484edfa2d29397,3244
     pantry-tree:
       size: 761
@@ -111,8 +118,8 @@ packages:
     hackage: unboxing-vector-0.2.0.0@sha256:a8f8ddab08d16cd4051fb1febb06aaaa54d211b50001664c06282cfdcb97bab0,3768
 snapshots:
 - completed:
-    size: 533053
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/29.yaml
-    sha256: eb8ccc595466edefb9a679f19aec2e283d12f4c6ea5eefded1ebe8bd157d77d1
+    size: 534126
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/31.yaml
+    sha256: 637fb77049b25560622a224845b7acfe81a09fdb6a96a3c75997a10b651667f6
   original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/29.yaml
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/31.yaml
