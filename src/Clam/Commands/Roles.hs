@@ -16,8 +16,7 @@ import qualified Database.Esqueleto.Experimental as E
 import Database.Persist as P
 import qualified Data.HashSet as HS
 
-
-modCommands ∷ Clam.BotC r ⇒ Sem (DSLState r) ()
+modCommands ∷ Cmd r
 modCommands = do
   addGroupCmd
   delGroupCmd

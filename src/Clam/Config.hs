@@ -12,5 +12,5 @@ data Config = Config
   , prefix2 ∷ L.Text -- user-defined text echo commands
   , guild   ∷ Snowflake Guild
   , db      ∷ ByteString
-  } deriving Generic
+  } deriving stock Generic
     deriving anyclass FromDhall
