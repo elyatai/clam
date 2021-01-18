@@ -72,6 +72,12 @@ trackRoleCmd = command_ @'[Text, Snowflake D.Role, RawEmoji] "track-role"
     sqlPut' (RoleKey role) $ Clam.Role emoji' gk
     void $ tell @Text ctx "Role tracked"
 
+data RoleRef = ById (Snowflake D.Role) | ByGroupEmoji Text RawEmoji
+
+instance Parser RoleRef r where
+  parse = parse @(Either (Snowflake D.Role) (Text, RawEmoji))
+    <&> either ById (uncurry ByGroupEmoji)
+
 untrackRoleCmd ∷ Cmd r
 untrackRoleCmd = command_ @'[RoleRef] "untrack-role" \ctx rref → do
   mrole ← case rref of
@@ -95,12 +101,6 @@ listRolesCmd = command_ @'[Text] "list-roles" \ctx grp → do
     "Group ``" <> grp <> "`` has " <> showt (length rs) <> " roles:\n"
     <> T.unlines (zipWith fmt rs rns)
   where fmt r n = "- " <> r ^. roleEmoji <> ": " <> n
-
-data RoleRef = ById (Snowflake D.Role) | ByGroupEmoji Text RawEmoji
-
-instance Parser RoleRef r where
-  parse = parse @(Either (Snowflake D.Role) (Text, RawEmoji))
-    <&> either ById (uncurry ByGroupEmoji)
 
 groupFromName ∷ Members [Fail, Sql SqlBackend] r ⇒ Text → Sem r (Key Group)
 groupFromName grp = sqlGetUq (UqGroupName grp)
