@@ -5,7 +5,7 @@ import Clam.Sql
 import Clam.Types as Clam
 import Clam.Utils.Calamity
 
-import Calamity as D hiding (emoji, parse, Member)
+import Calamity as D hiding (emoji, parse, roleName, Member)
 import Calamity.Commands hiding (commands)
 
 import qualified Data.Map as M
@@ -26,6 +26,7 @@ modCommands = do
   trackRoleCmd
   untrackRoleCmd
   listRolesCmd
+  makeRoleCmd
 
 userCommands ∷ Clam.BotC r ⇒ Sem (DSLState r) ()
 userCommands = do
@@ -107,6 +108,30 @@ listRolesCmd = command_ @'[Text] "list-roles" \ctx grp → do
   fmt c md = "- " <> c ^. roleEmoji <> case md of
     Nothing → " (deleted)"
     Just d  → ": " <> toStrict (d ^. #name)
+
+makeRoleCmd ∷ Cmd r
+makeRoleCmd = command_ @'[Text, Text, RawEmoji] "make-role"
+  \ctx grp roleName emoji → do
+    gid ← asks @Config $ view #guild
+    gk ← groupFromName grp
+    whenJustM (sqlGetUq $ UqRole gk $ showt emoji)
+      \(Entity (RoleKey rid) _) → do
+        mr ← upgrade (gid, rid)
+        fail . L.unpack $
+          maybe "A role " (\r → "The role " <> r ^. #name) mr
+          <> " already uses this emoji!"
+
+    role ←
+      invoke (CreateGuildRole gid $ ModifyGuildRoleData
+        (Just roleName)
+        Nothing
+        Nothing
+        (Just False)
+        (Just False))
+      >>= either (\_ → fail "Couldn't create role") pure
+    reactTo (ctx ^. #message) $ namedEmoji "thumbsup"
+
+    sqlPut' (RoleKey $ role ^. #id) $ Clam.Role (showt emoji) gk
 
 addRolesCmd ∷ Cmd r
 addRolesCmd = command_ @'[Text] "add-roles" \ctx grp → do
