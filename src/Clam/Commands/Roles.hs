@@ -29,13 +29,7 @@ commands = void do
 
     whenJustM (sqlGetUq $ UqRole gk emoji') \(Entity (RoleKey rid) _) → do
       g ← whenNothing (ctx ^. #guild) $ fail "You're not in a server!"
-      rest ← invoke (GetGuildRoles g)
-        >>= \case
-          Left e → do
-            error $ show @Text e
-            fail "Something went seriously wrong"
-          Right rs → pure rs
-        <&> find ((== rid) . getID)
+      rest ← upgrade (g ^. #id, rid)
         <&> maybe ", but could not be loaded" \r → ": " <> r ^. #name
       fail . L.unpack $
         "A role in group " <> codeline (toLazy grp)
