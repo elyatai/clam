@@ -94,7 +94,7 @@ listRolesCmd = command_ @'[Text] "list-roles" \ctx grp → do
   void . tell ctx $
     "Group ``" <> grp <> "`` has " <> showt (length rs) <> " roles:\n"
     <> T.unlines (zipWith fmt rs rns)
-  where fmt r n = "∙ " <> r ^. roleEmoji <> ": " <> n
+  where fmt r n = "- " <> r ^. roleEmoji <> ": " <> n
 
 data RoleRef = ById (Snowflake D.Role) | ByGroupEmoji Text RawEmoji
 
