@@ -32,7 +32,7 @@ executable clam-bot-exe
       Paths_clam_bot
   hs-source-dirs:
       src
-  default-extensions: BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts FlexibleInstances GADTs GeneralizedNewtypeDeriving LambdaCase MultiParamTypeClasses NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds RankNTypes ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeFamilies TypeOperators UnicodeSyntax
+  default-extensions: BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts FlexibleInstances GADTs GeneralizedNewtypeDeriving LambdaCase MultiParamTypeClasses NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds RankNTypes RecursiveDo ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeFamilies TypeOperators UnicodeSyntax
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wno-unused-do-bind -fplugin=Polysemy.Plugin
   build-depends:
       base
@@ -68,7 +68,7 @@ test-suite clam-bot-test
       Paths_clam_bot
   hs-source-dirs:
       test
-  default-extensions: BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts FlexibleInstances GADTs GeneralizedNewtypeDeriving LambdaCase MultiParamTypeClasses NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds RankNTypes ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeFamilies TypeOperators UnicodeSyntax
+  default-extensions: BlockArguments ConstraintKinds DataKinds DeriveAnyClass DeriveGeneric DerivingStrategies DuplicateRecordFields FlexibleContexts FlexibleInstances GADTs GeneralizedNewtypeDeriving LambdaCase MultiParamTypeClasses NoImplicitPrelude OverloadedLabels OverloadedLists OverloadedStrings PolyKinds RankNTypes RecursiveDo ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeFamilies TypeOperators UnicodeSyntax
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base

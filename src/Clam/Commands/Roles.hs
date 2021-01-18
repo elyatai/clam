@@ -23,6 +23,7 @@ commands = do
   trackRoleCmd
   untrackRoleCmd
   listRolesCmd
+  addRolesCmd
 
 addGroupCmd ∷ Cmd r
 addGroupCmd = command_ @'[Text] "add-group" $ \ctx grp → do
@@ -91,16 +92,63 @@ untrackRoleCmd = command_ @'[RoleRef] "untrack-role" \ctx rref → do
 
 listRolesCmd ∷ Cmd r
 listRolesCmd = command_ @'[Text] "list-roles" \ctx grp → do
-  gid ← asks @Config $ view #guild
   gk ← groupFromName grp
-  (rs, rks) ← sqlSel [ RoleGroup ==. gk ]
-    <&> unzip . map (entityVal &&& entityKey)
-  rns ← traverse (upgrade . (gid,) . unRoleKey) rks
-    <&> map (maybe "(deleted)" $ toStrict . view #name)
+  rs ← M.elems <$> getRolesInGroup gk
   void . tell ctx $
     "Group ``" <> grp <> "`` has " <> showt (length rs) <> " roles:\n"
-    <> T.unlines (zipWith fmt rs rns)
-  where fmt r n = "- " <> r ^. roleEmoji <> ": " <> n
+    <> T.unlines (fmap (uncurry fmt) rs)
+  where
+  fmt c md = "- " <> c ^. roleEmoji <> case md of
+    Nothing → " (deleted)"
+    Just d  → ": " <> toStrict (d ^. #name)
+
+addRolesCmd ∷ Cmd r
+addRolesCmd = command_ @'[Text] "add-roles" \ctx grp → do
+  gk ← groupFromName grp
+  rs ← getRolesInGroup gk
+    <&> M.mapMaybe (uncurry $ fmap . (,))
+    <&> M.foldMapWithKey \_ (cr, dr) → M.singleton (cr ^. roleEmoji) dr
+
+  Right myMsg ← tell ctx $
+    "Select roles and click " <> showt applyEmoji <> " to apply.\n"
+    <> "> " <> T.intercalate ", " (fmap (uncurry fmt) $ M.assocs rs)
+  reactTo myMsg applyEmoji
+  traverse_ (reactTo myMsg . UnicodeEmoji . toLazy) $ M.keys rs
+
+  waitUntil @'MessageReactionAddEvt \(msg, rct) →
+    msg ^. #id == myMsg ^. #id && rct ^. #emoji == applyEmoji
+
+  let uid = ctx ^. #user . #id
+  gid ← asks @Config $ view #guild
+  invoke (GetMessage myMsg myMsg)
+    >>= either (\e → do error (show @Text e) >> fail "Couldn't read reactions") pure
+    <&> toListOf ( #reactions
+                 . traversed
+                 . filtered (\rct → rct ^. #userID == uid)
+                 . #emoji
+                 . #_UnicodeEmoji)
+    <&> mapMaybe ((rs M.!?) . toStrict)
+    >>= traverse (invoke . AddGuildMemberRole gid uid)
+    <&> sequence_
+    >>= \case
+      Right _ → void . reactTo myMsg $ namedEmoji "thumbs_up"
+      Left e  → do
+        reactTo myMsg $ namedEmoji "x"
+        error (show @Text e)
+
+  where
+  applyEmoji = namedEmoji "white_check_mark"
+  fmt emoji r = emoji <> ": " <> toStrict (r ^. #name)
+
+getRolesInGroup ∷ Clam.BotC r ⇒
+  Key Group →
+  Sem r (Map (Snowflake D.Role) (Clam.Role, Maybe D.Role))
+getRolesInGroup gk = do
+  gid ← asks @Config $ view #guild
+  (rids, cs) ← sqlSel [ RoleGroup ==. gk ]
+    <&> unzip . map (unRoleKey . entityKey &&& entityVal)
+  mds ← traverse (upgrade . (gid,)) rids
+  pure $ M.fromList $ zip rids (zip cs mds)
 
 groupFromName ∷ Members [Fail, Sql SqlBackend] r ⇒ Text → Sem r (Key Group)
 groupFromName grp = sqlGetUq (UqGroupName grp)
