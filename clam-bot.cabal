@@ -59,6 +59,7 @@ executable clam-bot-exe
     , text
     , text-show
     , time
+    , unordered-containers
   default-language: Haskell2010
 
 test-suite clam-bot-test
@@ -96,4 +97,5 @@ test-suite clam-bot-test
     , text
     , text-show
     , time
+    , unordered-containers
   default-language: Haskell2010

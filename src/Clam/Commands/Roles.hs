@@ -1,4 +1,4 @@
-module Clam.Commands.Roles (commands) where
+module Clam.Commands.Roles (modCommands, userCommands) where
 
 import Clam.Prelude
 import Clam.Sql
@@ -7,15 +7,18 @@ import Clam.Utils.Calamity
 
 import Calamity as D hiding (emoji, parse, Member)
 import Calamity.Commands hiding (commands)
+
 import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as L
 import Database.Esqueleto.Experimental (From(..))
 import qualified Database.Esqueleto.Experimental as E
 import Database.Persist as P
+import qualified Data.HashSet as HS
 
-commands ∷ Clam.BotC r ⇒ Sem (DSLState r) ()
-commands = do
+
+modCommands ∷ Clam.BotC r ⇒ Sem (DSLState r) ()
+modCommands = do
   addGroupCmd
   delGroupCmd
   listGroupsCmd
@@ -23,6 +26,9 @@ commands = do
   trackRoleCmd
   untrackRoleCmd
   listRolesCmd
+
+userCommands ∷ Clam.BotC r ⇒ Sem (DSLState r) ()
+userCommands = do
   addRolesCmd
 
 addGroupCmd ∷ Cmd r
@@ -115,26 +121,33 @@ addRolesCmd = command_ @'[Text] "add-roles" \ctx grp → do
   reactTo myMsg applyEmoji
   traverse_ (reactTo myMsg . UnicodeEmoji . toLazy) $ M.keys rs
 
+  let uid = ctx ^. #user . #id
+      weCareAboutIt msg rct =
+           msg ^. #id == myMsg ^. #id
+        && rct ^. #userID == uid
+        && has (#emoji . #_UnicodeEmoji) rct
+
+  reacts ← newIORef HS.empty
+
+  la ← react @'MessageReactionAddEvt \(msg, rct) →
+    when (weCareAboutIt msg rct) $
+      modifyIORef' reacts $ HS.insert (showt $ rct ^. #emoji)
+  lr ← react @'MessageReactionRemoveEvt \(msg, rct) →
+    when (weCareAboutIt msg rct) $
+      modifyIORef' reacts $ HS.delete (showt $ rct ^. #emoji)
+  let removeListeners = la >> lr
+
   waitUntil @'MessageReactionAddEvt \(msg, rct) →
     msg ^. #id == myMsg ^. #id && rct ^. #emoji == applyEmoji
+  invoke $ DeleteAllReactions myMsg myMsg
+  removeListeners
 
-  let uid = ctx ^. #user . #id
   gid ← asks @Config $ view #guild
-  invoke (GetMessage myMsg myMsg)
-    >>= either (\e → do error (show @Text e) >> fail "Couldn't read reactions") pure
-    <&> toListOf ( #reactions
-                 . traversed
-                 . filtered (\rct → rct ^. #userID == uid)
-                 . #emoji
-                 . #_UnicodeEmoji)
-    <&> mapMaybe ((rs M.!?) . toStrict)
-    >>= traverse (invoke . AddGuildMemberRole gid uid)
-    <&> sequence_
-    >>= \case
-      Right _ → void . reactTo myMsg $ namedEmoji "thumbs_up"
-      Left e  → do
-        reactTo myMsg $ namedEmoji "x"
-        error (show @Text e)
+  readIORef reacts
+    <&> HS.toList
+    <&> mapMaybe (rs M.!?)
+    >>= traverse_ (invoke . AddGuildMemberRole gid uid)
+  void . reactTo myMsg $ namedEmoji "thumbsup"
 
   where
   applyEmoji = namedEmoji "white_check_mark"

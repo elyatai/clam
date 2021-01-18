@@ -71,7 +71,8 @@ bot = void do
        requires [chk] Vent.commands
 
     do chk ← mkPermsCheck "Manage Roles" manageRoles
-       requires [chk] Roles.commands
+       requires [chk] Roles.modCommands
+    Roles.userCommands
 
   react @('CustomEvt "command-error" (Context, CommandError)) \(ctx, err) →
     void . tell ctx $ case err of

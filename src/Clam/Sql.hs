@@ -8,7 +8,7 @@ module Clam.Sql
   , P.SqlBackend
   ) where
 
-import Clam.Prelude
+import Clam.Prelude hiding (get)
 
 import Data.Pool (Pool)
 import Database.Persist

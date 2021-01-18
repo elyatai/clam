@@ -35,6 +35,7 @@ dependencies:
 - text
 - text-show
 - time
+- unordered-containers
 
 default-extensions:
 - BlockArguments
