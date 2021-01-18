@@ -55,6 +55,7 @@ default-extensions:
 - OverloadedLists
 - OverloadedStrings
 - PolyKinds
+- RankNTypes
 - ScopedTypeVariables
 - StandaloneDeriving
 - TupleSections

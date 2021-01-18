@@ -3,8 +3,9 @@ module Clam.Commands.Roles (commands) where
 import Clam.Prelude
 import Clam.Sql
 import Clam.Types as Clam
+import Clam.Utils.Calamity
 
-import Calamity as D hiding (emoji, parse)
+import Calamity as D hiding (emoji, parse, Member)
 import Calamity.Commands hiding (commands)
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -15,32 +16,45 @@ import Database.Persist as P
 
 commands ∷ Clam.BotC r ⇒ Sem (DSLState r) ()
 commands = void do
-  command @'[Text] "add-group" \ctx grp → do
-    whenM (isLeft <$> sqlPutUq (Group grp)) $
-      fail "That group already exists!"
-    void $ tell @Text ctx "Group created"
+  addGroupCmd
+  delGroupCmd
+  listGroupsCmd
 
-  command @'[Text] "del-group" \ctx grp → do
-    k ← groupFromName grp
-    whenM (sqlHas [RoleGroup ==. k]) $
-      fail "Can't delete group, roles under it exist"
-    sqlDelUq $ UqGroupName grp
-    void $ tell @Text ctx "Group deleted"
+  trackRoleCmd
+  untrackRoleCmd
 
-  command @'[] "list-groups" \ctx → do
-    gs ← sqlGetQ $ E.from $ Table @Group
-    rs ← sqlGetQ $ E.from $ Table @Clam.Role
-    let consRole (Entity _ r) = ix (r ^. roleGroup) . _2 %~ (r :)
-        fmt grp [] = grp <> " (0)"
-        fmt grp rs = grp <> " (" <> showt (length rs) <> "): "
-                  <> T.intercalate ", " (rs ^.. traversed . roleEmoji)
-    map (\(Entity k g) → (k, (g ^. groupName, []))) gs
-      & M.fromList
-      & flip (foldl' $ flip consRole) rs
-      & T.unlines . map (uncurry fmt) . M.elems
-      & void . tell ctx
+addGroupCmd ∷ Cmd r
+addGroupCmd = command_ @'[Text] "add-group" $ \ctx grp → do
+  whenM (isLeft <$> sqlPutUq (Group grp)) $
+    fail "That group already exists!"
+  void $ tell @Text ctx "Group created"
 
-  command @'[Text, Snowflake D.Role, RawEmoji] "track-role" \ctx grp role emoji → do
+delGroupCmd ∷ Cmd r
+delGroupCmd = command_ @'[Text] "del-group" \ctx grp → do
+  k ← groupFromName grp
+  whenM (sqlHas [RoleGroup ==. k]) $
+    fail "Can't delete group, roles under it exist"
+  sqlDelUq $ UqGroupName grp
+  void $ tell @Text ctx "Group deleted"
+
+listGroupsCmd ∷ Cmd r
+listGroupsCmd = command_ @'[] "list-groups" \ctx → do
+  gs ← sqlGetQ $ E.from $ Table @Group
+  rs ← sqlGetQ $ E.from $ Table @Clam.Role
+  map (\(Entity k g) → (k, (g ^. groupName, []))) gs
+    & M.fromList
+    & flip (foldl' $ flip consRole) rs
+    & T.unlines . map (uncurry fmt) . M.elems
+    & void . tell ctx
+  where
+    consRole (Entity _ r) = ix (r ^. roleGroup) . _2 %~ (r :)
+    fmt grp [] = grp <> " (0)"
+    fmt grp rs = grp <> " (" <> showt (length rs) <> "): " <>
+      T.intercalate ", " (rs ^.. traversed . roleEmoji)
+
+trackRoleCmd ∷ Cmd r
+trackRoleCmd = command_ @'[Text, Snowflake D.Role, RawEmoji] "track-role"
+  \ctx grp role emoji → do
     let emoji' = showt emoji
     gk ← groupFromName grp
 
@@ -56,15 +70,16 @@ commands = void do
     sqlPut' (RoleKey role) $ Clam.Role emoji' gk
     void $ tell @Text ctx "Role tracked"
 
-  command @'[RoleRef] "untrack-role" \ctx rref → do
-    mrole ← case rref of
-      ById rid → ($> RoleKey rid) <$> sqlGet (RoleKey rid)
-      ByGroupEmoji g e → do
-        gk ← groupFromName g
-        fmap entityKey <$> sqlGetUq (UqRole gk $ showt e)
-    rk ← whenNothing mrole $ fail "Role not found, nothing done"
-    sqlDel rk
-    void $ tell @Text ctx "Role untracked"
+untrackRoleCmd ∷ Cmd r
+untrackRoleCmd = command_ @'[RoleRef] "untrack-role" \ctx rref → do
+  mrole ← case rref of
+    ById rid → ($> RoleKey rid) <$> sqlGet (RoleKey rid)
+    ByGroupEmoji g e → do
+      gk ← groupFromName g
+      fmap entityKey <$> sqlGetUq (UqRole gk $ showt e)
+  rk ← whenNothing mrole $ fail "Role not found, nothing done"
+  sqlDel rk
+  void $ tell @Text ctx "Role untracked"
 
 data RoleRef = ById (Snowflake D.Role) | ByGroupEmoji Text RawEmoji
 
