@@ -1,7 +1,7 @@
-module Clam.Prelude (module M) where
+module Clam.Prelude (module M, map) where
 
 import Relude as M hiding
-  ( uncons, error
+  ( uncons, error, map
   , Reader, runReader, ask, asks, local
   , State, runState, evalState, execState, get, put, gets, modify, modify'
   )
@@ -16,3 +16,7 @@ import Polysemy.Fail as M
 import TextShow as M (showt, showtl)
 
 import Clam.Orphans ()
+
+map ∷ Functor f ⇒ (a → b) → f a → f b
+map = fmap
+{-# INLINE map #-}

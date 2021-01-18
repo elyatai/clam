@@ -49,10 +49,10 @@ listGroupsCmd ∷ Cmd r
 listGroupsCmd = command_ @'[] "list-groups" \ctx → do
   gs ← sqlGetQ $ E.from $ Table @Group
   rs ← sqlGetQ $ E.from $ Table @Clam.Role
-  fmap (\(Entity k g) → (k, (g ^. groupName, []))) gs
+  map (\(Entity k g) → (k, (g ^. groupName, []))) gs
     & M.fromList
     & flip (foldl' $ flip consRole) rs
-    & T.unlines . fmap (uncurry fmt) . M.elems
+    & T.unlines . map (uncurry fmt) . M.elems
     & void . tell ctx
   where
     consRole (Entity _ r) = ix (r ^. roleGroup) . _2 %~ (r :)
@@ -91,7 +91,7 @@ untrackRoleCmd = command_ @'[RoleRef] "untrack-role" \ctx rref → do
     ById rid → ($> RoleKey rid) <$> sqlGet (RoleKey rid)
     ByGroupEmoji g e → do
       gk ← groupFromName g
-      fmap entityKey <$> sqlGetUq (UqRole gk $ showt e)
+      map entityKey <$> sqlGetUq (UqRole gk $ showt e)
   rk ← whenNothing mrole $ fail "Role not found, nothing done"
   sqlDel rk
   void $ tell @Text ctx "Role untracked"
@@ -102,7 +102,7 @@ listRolesCmd = command_ @'[Text] "list-roles" \ctx grp → do
   rs ← M.elems <$> getRolesInGroup gk
   void . tell ctx $
     "Group ``" <> grp <> "`` has " <> showt (length rs) <> " roles:\n"
-    <> T.unlines (fmap (uncurry fmt) rs)
+    <> T.unlines (map (uncurry fmt) rs)
   where
   fmt c md = "- " <> c ^. roleEmoji <> case md of
     Nothing → " (deleted)"
@@ -136,12 +136,12 @@ addRolesCmd ∷ Cmd r
 addRolesCmd = command_ @'[Text] "add-roles" \ctx grp → do
   gk ← groupFromName grp
   rs ← getRolesInGroup gk
-    <&> M.mapMaybe (uncurry $ fmap . (,))
+    <&> M.mapMaybe (uncurry $ map . (,))
     <&> M.foldMapWithKey \_ (cr, dr) → M.singleton (cr ^. roleEmoji) dr
 
   Right myMsg ← tell ctx $
     "Select roles and click " <> showt applyEmoji <> " to apply.\n"
-    <> "> " <> T.intercalate ", " (fmap (uncurry fmt) $ M.assocs rs)
+    <> "> " <> T.intercalate ", " (map (uncurry fmt) $ M.assocs rs)
   reactTo myMsg applyEmoji
   traverse_ (reactTo myMsg . UnicodeEmoji . toLazy) $ M.keys rs
 
