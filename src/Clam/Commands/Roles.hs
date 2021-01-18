@@ -6,8 +6,12 @@ import Clam.Types as Clam
 
 import Calamity as D hiding (emoji, parse)
 import Calamity.Commands hiding (commands)
+import qualified Data.Map as M
+import qualified Data.Text as T
 import qualified Data.Text.Lazy as L
-import Database.Persist
+import Database.Esqueleto.Experimental (From(..))
+import qualified Database.Esqueleto.Experimental as E
+import Database.Persist as P
 
 commands ∷ Clam.BotC r ⇒ Sem (DSLState r) ()
 commands = void do
@@ -22,6 +26,19 @@ commands = void do
       fail "Can't delete group, roles under it exist"
     sqlDelUq $ UqGroupName grp
     void $ tell @Text ctx "Group deleted"
+
+  command @'[] "list-groups" \ctx → do
+    gs ← sqlGetQ $ E.from $ Table @Group
+    rs ← sqlGetQ $ E.from $ Table @Clam.Role
+    let consRole (Entity _ r) = ix (r ^. roleGroup) . _2 %~ (r :)
+        fmt grp [] = grp <> " (0)"
+        fmt grp rs = grp <> " (" <> showt (length rs) <> "): "
+                  <> T.intercalate ", " (rs ^.. traversed . roleEmoji)
+    map (\(Entity k g) → (k, (g ^. groupName, []))) gs
+      & M.fromList
+      & flip (foldl' $ flip consRole) rs
+      & T.unlines . map (uncurry fmt) . M.elems
+      & void . tell ctx
 
   command @'[Text, Snowflake D.Role, RawEmoji] "track-role" \ctx grp role emoji → do
     let emoji' = showt emoji

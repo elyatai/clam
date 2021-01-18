@@ -14,6 +14,7 @@ dependencies:
 - base
 - bytestring
 - calamity
+- containers
 - data-flags
 - dhall
 - di
@@ -56,6 +57,7 @@ default-extensions:
 - PolyKinds
 - ScopedTypeVariables
 - StandaloneDeriving
+- TupleSections
 - TypeApplications
 - TypeFamilies
 - TypeOperators
