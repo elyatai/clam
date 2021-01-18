@@ -15,13 +15,14 @@ import qualified Database.Esqueleto.Experimental as E
 import Database.Persist as P
 
 commands ∷ Clam.BotC r ⇒ Sem (DSLState r) ()
-commands = void do
+commands = do
   addGroupCmd
   delGroupCmd
   listGroupsCmd
 
   trackRoleCmd
   untrackRoleCmd
+  listRolesCmd
 
 addGroupCmd ∷ Cmd r
 addGroupCmd = command_ @'[Text] "add-group" $ \ctx grp → do
@@ -81,6 +82,19 @@ untrackRoleCmd = command_ @'[RoleRef] "untrack-role" \ctx rref → do
   rk ← whenNothing mrole $ fail "Role not found, nothing done"
   sqlDel rk
   void $ tell @Text ctx "Role untracked"
+
+listRolesCmd ∷ Cmd r
+listRolesCmd = command_ @'[Text] "list-roles" \ctx grp → do
+  gid ← asks @Config $ view #guild
+  gk ← groupFromName grp
+  (rs, rks) ← sqlSel [ RoleGroup ==. gk ]
+    <&> unzip . map (entityVal &&& entityKey)
+  rns ← traverse (upgrade . (gid,) . unRoleKey) rks
+    <&> map (maybe "(deleted)" $ toStrict . view #name)
+  void . tell ctx $
+    "Group ``" <> grp <> "`` has " <> showt (length rs) <> " roles:\n"
+    <> T.unlines (zipWith fmt rs rns)
+  where fmt r n = "∙ " <> r ^. roleEmoji <> ": " <> n
 
 data RoleRef = ById (Snowflake D.Role) | ByGroupEmoji Text RawEmoji
 
